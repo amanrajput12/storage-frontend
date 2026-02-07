@@ -13,7 +13,7 @@ import {
   renameDirectory,
 } from "./api/directoryApi";
 
-import { deleteFile, renameFile } from "./api/fileApi";
+import { deleteFile, renameFile, uploadInitiate } from "./api/fileApi";
 import DetailsPopup from "./components/DetailsPopup";
 import ConfirmDeleteModal from "./components/ConfirmDeleteModel";
 
@@ -62,7 +62,7 @@ function DirectoryView() {
     setActiveContextMenu(null);
   }, [dirId]);
 
-  function getFileIcon(filename) {
+   function getFileIcon(filename) {
     const ext = filename.split(".").pop().toLowerCase();
     switch (ext) {
       case "pdf":
@@ -100,7 +100,7 @@ function DirectoryView() {
     else window.location.href = `http://localhost:4000/file/${id}`;
   }
 
-  function handleFileSelect(e) {
+  async function handleFileSelect(e) {
     const file = e.target.files?.[0];
     if (!file) return;
 
@@ -119,23 +119,30 @@ function DirectoryView() {
       isUploading: true,
       progress: 0,
     };
+        
+
+  const resp = await  uploadInitiate({name:file.name,size:file.size,contentType:file.type|| `${file.name.split(".")[1]}`,parentDirId:dirId})
+
+  console.log("getting resp",resp)
+
+  const { uploadUrl,fileId } = resp;
 
     // Optimistically show the file in the list
     setFilesList((prev) => [tempItem, ...prev]);
     setUploadItem(tempItem);
     e.target.value = "";
 
-    startUpload(tempItem);
+    startUpload({item:tempItem,uploadUrl:uploadUrl,fileId });
+
   }
 
-  function startUpload(item) {
+  function startUpload({item,uploadUrl,fileId}) {
     const xhr = new XMLHttpRequest();
+
     xhrRef.current = xhr;
 
-    xhr.open("POST", `http://localhost:4000/file/${dirId || ""}`);
-    xhr.withCredentials = true;
-    xhr.setRequestHeader("filename", item.name);
-    xhr.setRequestHeader("filesize", item.size);
+    xhr.open("PUT", uploadUrl);
+  
 
     xhr.upload.addEventListener("progress", (evt) => {
       if (evt.lengthComputable) {
@@ -151,7 +158,7 @@ function DirectoryView() {
     };
 
     xhr.onerror = () => {
-      setErrorMessage("This file is larger than the available space!");
+      setErrorMessage("Something went wrong during file upload. Please try again.");
       // Remove temp item from the list
       setFilesList((prev) => prev.filter((f) => f.id !== item.id));
       setUploadItem(null);
