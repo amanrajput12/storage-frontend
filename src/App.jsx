@@ -4,6 +4,7 @@ import Register from "./Register";
 import "./App.css";
 import Login from "./Login";
 import UsersPage from "./UsersPage";
+import Aman from "./Aman";
 
 const router = createBrowserRouter([
   {
@@ -21,6 +22,10 @@ const router = createBrowserRouter([
   {
     path: "/users",
     element: <UsersPage />,
+  },
+  {
+     path:"/Aman",
+     element:<Aman />
   },
   {
     path: "/directory/:dirId",
