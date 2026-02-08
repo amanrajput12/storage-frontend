@@ -13,7 +13,7 @@ import {
   renameDirectory,
 } from "./api/directoryApi";
 
-import { deleteFile, renameFile, uploadInitiate } from "./api/fileApi";
+import { deleteFile, renameFile, uploadComplete, uploadInitiate } from "./api/fileApi";
 import DetailsPopup from "./components/DetailsPopup";
 import ConfirmDeleteModal from "./components/ConfirmDeleteModel";
 
@@ -121,7 +121,8 @@ function DirectoryView() {
     };
         
 
-  const resp = await  uploadInitiate({name:file.name,size:file.size,contentType:file.type|| `${file.name.split(".")[1]}`,parentDirId:dirId})
+ try{
+   const resp = await  uploadInitiate({name:file.name,size:file.size,contentType:file.type|| `${file.name.split(".")[1]}`,parentDirId:dirId})
 
   console.log("getting resp",resp)
 
@@ -133,6 +134,15 @@ function DirectoryView() {
     e.target.value = "";
 
     startUpload({item:tempItem,uploadUrl:uploadUrl,fileId });
+ }
+ catch (error){
+  setErrorMessage(error.response.data.error);
+  console.log("Error during upload initiation",error.response.data.error);
+
+  setTimeout(() => {
+    setErrorMessage("");
+  }, 3000);
+ }
 
   }
 
@@ -151,8 +161,20 @@ function DirectoryView() {
       }
     });
 
-    xhr.onload = () => {
+    xhr.onload = async () => {
       // Clear upload state and refresh directory
+
+      // create by me for s3 upload integration to tell server increase the limit of of total storage
+      console.log(xhr.status);
+      if(xhr.status === 200){
+const  response = await uploadComplete(fileId);
+      console.log("upload complete response",response)
+
+      }
+      else{
+        setErrorMessage("File not uploaded properly");
+        setTimeout(() => setErrorMessage(""), 3000);
+      }
       setUploadItem(null);
       loadDirectory();
     };

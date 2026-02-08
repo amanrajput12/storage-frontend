@@ -18,3 +18,10 @@ export const uploadInitiate = async (fildata) => {
   return data;
 };
 
+
+// create by me for s3 upload integration to tell server increase the limit of of total storage
+export const uploadComplete = async (fileId) => {
+  const { data } = await axiosWithCreds.post(`/file/upload/complete`, { fileId });
+  return data;
+};
+
